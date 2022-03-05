@@ -1,0 +1,152 @@
+{
+  "requiredSoftwareReliability" : {
+    "category": "Product Attributes",
+    "ratings": {
+      "veryLow":  0.75,
+      "low":  0.88,
+      "nominal":  1,
+      "high":  1.15,
+      "veryHigh":  1.4
+    }
+  },
+  "sizeOfApplicationDatabase" : {
+    "category": "Product Attributes",
+    "ratings": {
+      "veryLow":  0,
+      "low":  0.94,
+      "nominal":  1,
+      "high":  1.08,
+      "veryHigh":  1.16
+    }
+  },
+  "complexityOfProduct" : {
+    "category": "Product Attributes",
+    "ratings": {
+      "veryLow":  0.7,
+      "low":  0.85,
+      "nominal":  1,
+      "high":  1.15,
+      "veryHigh":  1.3
+    }
+  },
+  "runtimePerformanceConstraints" : {
+    "category": "Hardware Attributes",
+    "ratings": {
+      "veryLow":  0,
+      "low":  0,
+      "nominal":  1,
+      "high":  1.15,
+      "veryHigh":  1.3
+    }
+  },
+  "memoryConstraints" : {
+    "category": "Hardware Attributes",
+    "ratings": {
+      "veryLow":  0,
+      "low":  0,
+      "nominal":  1,
+      "high":  1.06,
+      "veryHigh":  1.21
+    }
+  },
+  "volatilityOfEnvironment" : {
+    "category": "Hardware Attributes",
+    "ratings": {
+      "veryLow": 0,
+      "low": 0.87,
+      "nominal": 1,
+      "high": 1.15,
+      "veryHigh": 1.3
+    }
+  },
+  "requiredTurnaroundTime" : {
+    "category": "Hardware Attributes",
+    "ratings": {
+      "veryLow":  0,
+      "low":  0.94,
+      "nominal":  1,
+      "high":  1.07,
+      "veryHigh":  1.15
+    }
+  },
+  "analystCapability" : {
+    "category": "Personnel Attributes",
+    "ratings": {
+      "veryLow":  1.46,
+      "low":  1.19,
+      "nominal":  1,
+      "high":  0.86,
+      "veryHigh":  0.71
+    }
+  },
+  "applicationExperience" : {
+    "category": "Personnel Attributes",
+    "ratings": {
+      "veryLow":  1.29,
+      "low":  1.13,
+      "nominal":  1,
+      "high":  0.91,
+      "veryHigh":  0.82
+    }
+  },
+  "softwareEngineerAbility" : {
+    "category": "Personnel Attributes",
+    "ratings": {
+      "veryLow":  1.42,
+      "low":  1.17,
+      "nominal":  1,
+      "high":  0.86,
+      "veryHigh":  0.7
+    }
+  },
+  "environmentExperience" : {
+    "category": "Personnel Attributes",
+    "ratings": {
+      "veryLow":  1.21,
+      "low":  1.1,
+      "nominal":  1,
+      "high":  0.9,
+      "veryHigh":  0
+    }
+  },
+  "programmingLanguageExperience" : {
+    "category": "Personnel Attributes",
+    "ratings": {
+      "veryLow":  1.14,
+      "low":  1.07,
+      "nominal":  1,
+      "high":  0.95,
+      "veryHigh":  0
+    }
+  },
+  "applicationOfSoftwareEngineeringMethods" : {
+    "category": "Project Attributes",
+    "ratings": {
+      "veryLow":  1.24,
+      "low":  1.1,
+      "nominal":  1,
+      "high":  0.91,
+      "veryHigh":  0.82
+    }
+  },
+  "useOfSoftwareTools" : {
+    "category": "Project Attributes",
+    "ratings": {
+      "veryLow":  1.24,
+      "low":  1.1,
+      "nominal":  1,
+      "high":  0.91,
+      "veryHigh":  0.83
+    }
+  },
+  "requiredDevelopmentSchedule" : {
+    "category": "Project Attributes",
+    "ratings": {
+      "veryLow":  1.23,
+      "low":  1.08,
+      "nominal":  1,
+      "high":  1.04,
+      "veryHigh":  1.1
+    }
+  }
+}
