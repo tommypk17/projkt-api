@@ -18,6 +18,20 @@ export class CocomoController {
     }
 
     /**
+     * Get rating names and categories as list
+     */
+    @Get('ratings/categories/:categoryName')
+    getRatingsByCategory(@Param('categoryName') categoryName: string): any {
+        let cocomo: Cocomo = new Cocomo();
+        let res = cocomo.getCocomoRatingsNamesByCategory(categoryName);
+        if(res){
+            return res;
+        }else{
+            throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
      * Get model names as list
      */
     @Get('models')

@@ -2,6 +2,7 @@ import {ECocomoRatings} from "../enums/eCOCOMORating";
 import * as fs from "fs";
 import {IsNumber, IsString} from "class-validator";
 import {FileService} from "../services/FileService";
+import {KeyValue} from "./Common";
 
 export class Cocomo {
     linesOfCode: number;
@@ -31,11 +32,27 @@ export class Cocomo {
     /**
      * get COCOMO rating names
      */
-    getCocomoRatingsNames = (): string[] => {
-        let ratingList: string[] = [];
+    getCocomoRatingsNames = (): KeyValue<string, string>[] => {
+        let ratingList: KeyValue<string, string>[] = [];
         let cocomoRatingList = FileService.readCocomoRatingList();
         Object.keys(cocomoRatingList).forEach((v: string, i: number, a: string[]) => {
-            ratingList.push(v);
+            let temp: KeyValue<string, string> = {key: v, value: cocomoRatingList[v].display};
+            ratingList.push(temp);
+        });
+        return ratingList;
+    }
+
+    /**
+     * get COCOMO rating names and categories
+     */
+    getCocomoRatingsNamesByCategory = (categoryName: string): KeyValue<string, string>[] => {
+        let ratingList: KeyValue<string, string>[] = [];
+        let cocomoRatingList = FileService.readCocomoRatingList();
+        Object.keys(cocomoRatingList).forEach((v: string, i: number, a: string[]) => {
+            if(cocomoRatingList[v].category == categoryName){
+                let temp: KeyValue<string, string> = {key: v, value: cocomoRatingList[v].display};
+                ratingList.push(temp);
+            }
         });
         return ratingList;
     }

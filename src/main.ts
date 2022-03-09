@@ -11,6 +11,12 @@ async function bootstrap() {
           whitelist: true,
       }),
   );
+  app.enableCors({
+      "origin": "*",
+      "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+      "preflightContinue": false,
+      "optionsSuccessStatus": 204
+  })
   await app.listen(3000);
 }
 bootstrap();
