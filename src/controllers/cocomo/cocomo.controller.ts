@@ -8,16 +8,47 @@ import {
   Post,
 } from '@nestjs/common';
 import { Cocomo, CocomoRequest } from '../../models/COCOMO';
+import {CocomoModelsService} from "../../services/CocomoModels.service";
+import {CocomoRatingsService} from "../../services/CocomoRatings.service";
+import {FileService} from "../../services/FileService";
+import {KeyValue} from "../../models/Common";
 
 @Controller('cocomo')
 export class CocomoController {
+  private readonly _cocomoModelService: CocomoModelsService;
+  private readonly _cocomoRatingService: CocomoRatingsService;
+
+  constructor(private cocomoModelService: CocomoModelsService, private cocomoRatingService: CocomoRatingsService) {
+    this._cocomoModelService = cocomoModelService;
+    this._cocomoRatingService = cocomoRatingService;
+  }
+  @Get('test')
+  test(): any {
+    return this._cocomoRatingService.getCocomoRatingsNames();
+    // let ratings: any[] = [];
+    // let ratingList = FileService.readCocomoRatingList();
+    // Object.keys(ratingList).forEach(
+    //     (v: string, i: number, a: string[]) => {
+    //       const temp: any = {
+    //         name: v,
+    //         display: ratingList[v].display,
+    //         category: ratingList[v].category,
+    //         ratings: ratingList[v].ratings
+    //       };
+    //       ratings.push(temp);
+    //     },
+    // );
+    // ratings.forEach(newRating => {
+    //   this._cocomoRatingService.create(newRating);
+    // });
+  }
+
   /**
    * Get rating names as list
    */
   @Get('ratings')
   getRatings(): any {
-    const cocomo: Cocomo = new Cocomo();
-    const res = cocomo.getCocomoRatingsNames();
+    const res = this._cocomoRatingService.getCocomoRatingsNames();
     if (res) {
       return res;
     } else {
@@ -30,8 +61,7 @@ export class CocomoController {
    */
   @Get('ratings/categories/:categoryName')
   getRatingsByCategory(@Param('categoryName') categoryName: string): any {
-    const cocomo: Cocomo = new Cocomo();
-    const res = cocomo.getCocomoRatingsNamesByCategory(categoryName);
+    const res = this._cocomoRatingService.getCocomoRatingsNamesByCategory(categoryName);
     if (res) {
       return res;
     } else {
@@ -44,8 +74,7 @@ export class CocomoController {
    */
   @Get('models')
   getModels(): any {
-    const cocomo: Cocomo = new Cocomo();
-    const res = cocomo.getCocomoModelNames();
+    const res = this._cocomoModelService.findAll();
     if (res) {
       return res;
     } else {
@@ -59,8 +88,7 @@ export class CocomoController {
    */
   @Get('ratings/:ratingName')
   getRating(@Param('ratingName') ratingName: string): any {
-    const cocomo: Cocomo = new Cocomo();
-    const res = cocomo.getCocomoRatingsByName(ratingName);
+    const res = this._cocomoRatingService.getCocomoRatingsByName(ratingName);
     if (res) {
       return res;
     } else {
@@ -78,8 +106,7 @@ export class CocomoController {
     @Param('ratingName') ratingName: string,
     @Param('rating') rating: string,
   ): any {
-    const cocomo: Cocomo = new Cocomo();
-    const res = cocomo.getCocomoScoreByNameAndRating(ratingName, rating);
+    const res = this._cocomoRatingService.getCocomoScoreByNameAndRating(ratingName, rating);
     if (res) {
       return res;
     } else {
@@ -93,8 +120,7 @@ export class CocomoController {
    */
   @Get('models/:modelName')
   getModel(@Param('modelName') modelName: string): any {
-    const cocomo: Cocomo = new Cocomo();
-    const res = cocomo.getCocomoModelByName(modelName);
+    const res = this._cocomoModelService.getCocomoModelByName(modelName);
     if (res) {
       return res;
     } else {
@@ -112,8 +138,7 @@ export class CocomoController {
     @Param('modelName') modelName: string,
     @Param('modelVariable') modelVariable: string,
   ): any {
-    const cocomo: Cocomo = new Cocomo();
-    const res = cocomo.getCocomoModelByNameAndVariable(
+    const res = this._cocomoModelService.getCocomoModelByNameAndVariable(
       modelName,
       modelVariable,
     );

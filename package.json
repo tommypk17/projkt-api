@@ -33,6 +33,7 @@
   "main": "dist/main.js",
   "dependencies": {
     "@nestjs/common": "^8.0.0",
+    "@nestjs/config": "^2.0.0",
     "@nestjs/core": "^8.0.0",
     "@nestjs/platform-express": "^8.4.4",
     "class-transformer": "^0.5.1",
