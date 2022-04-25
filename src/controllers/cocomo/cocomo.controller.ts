@@ -5,13 +5,12 @@ import {
   HttpException,
   HttpStatus,
   Param,
-  Post,
+  Post, Req, UseGuards,
 } from '@nestjs/common';
+import { Request } from "@nestjs/common";
 import { Cocomo, CocomoRequest } from '../../models/COCOMO';
 import {CocomoModelsService} from "../../services/CocomoModels.service";
 import {CocomoRatingsService} from "../../services/CocomoRatings.service";
-import {FileService} from "../../services/FileService";
-import {KeyValue} from "../../models/Common";
 
 @Controller('cocomo')
 export class CocomoController {
@@ -22,32 +21,11 @@ export class CocomoController {
     this._cocomoModelService = cocomoModelService;
     this._cocomoRatingService = cocomoRatingService;
   }
-  @Get('test')
-  test(): any {
-    return this._cocomoRatingService.getCocomoRatingsNames();
-    // let ratings: any[] = [];
-    // let ratingList = FileService.readCocomoRatingList();
-    // Object.keys(ratingList).forEach(
-    //     (v: string, i: number, a: string[]) => {
-    //       const temp: any = {
-    //         name: v,
-    //         display: ratingList[v].display,
-    //         category: ratingList[v].category,
-    //         ratings: ratingList[v].ratings
-    //       };
-    //       ratings.push(temp);
-    //     },
-    // );
-    // ratings.forEach(newRating => {
-    //   this._cocomoRatingService.create(newRating);
-    // });
-  }
-
   /**
    * Get rating names as list
    */
   @Get('ratings')
-  getRatings(): any {
+  getRatings(@Req() req: Request): any {
     const res = this._cocomoRatingService.getCocomoRatingsNames();
     if (res) {
       return res;

@@ -1,8 +1,5 @@
-import { ECocomoRatings } from '../enums/eCOCOMORating';
-import * as fs from 'fs';
 import { IsNumber, IsString } from 'class-validator';
 import { FileService } from '../services/FileService';
-import { KeyValue } from './Common';
 
 export class Cocomo {
   linesOfCode: number;
