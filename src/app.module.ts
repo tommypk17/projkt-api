@@ -10,13 +10,11 @@ import {AuthenticationMiddleware} from "./authentication/middleware/authenticati
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.development']
     }),
     FirestoreModule.forRoot({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        keyFilename: configService.get<string>('firebase_config_path'),
-        projectId: configService.get<string>('firebase_project_id')
+        keyFilename: configService.get<string>('SA_KEY'),
       }),
       inject: [ConfigService],
     }),
