@@ -8,9 +8,11 @@ import {
   Post, Req, UseGuards,
 } from '@nestjs/common';
 import { Request } from "@nestjs/common";
-import { Cocomo, CocomoRequest } from '../../models/COCOMO';
+import {Cocomo, CocomoRequest, CocomoResponse} from '../../models/COCOMO';
 import {CocomoModelsService} from "../../services/CocomoModels.service";
 import {CocomoRatingsService} from "../../services/CocomoRatings.service";
+import {CocomoModelDocument} from "../../firestore/models/CocomoModel.document";
+import {CocomoRatingDocument} from "../../firestore/models/CocomoRating.document";
 
 @Controller('cocomo')
 export class CocomoController {
@@ -133,8 +135,25 @@ export class CocomoController {
    * @param modelVariable
    */
   @Post('calculate')
-  calculateCOCOMO(@Body() cocomoRequest: CocomoRequest): any {
-    const cocomo: Cocomo = Cocomo.fromRequest(cocomoRequest);
-    return cocomo.calculate();
+  calculateCOCOMO(@Body() cocomoRequest: CocomoRequest): Promise<any> {
+    let cocomo: Cocomo = new Cocomo();
+    let cocomoModels: CocomoModelDocument[] = [];
+    let cocomoRatings: CocomoRatingDocument[] = [];
+    return new Promise<any>((resolve, err) => {
+      this._cocomoModelService.findAll().then((res: CocomoModelDocument[]) => {
+        cocomoModels = res;
+      }).then(() => {
+        this._cocomoRatingService.findAll().then((res: CocomoRatingDocument[]) => {
+          cocomoRatings = res;
+        }).then(() => {
+          cocomo = Cocomo.fromRequest(cocomoRequest, cocomoModels, cocomoRatings);
+        }).then(() => {
+          let cocomoRes: CocomoResponse = cocomo.calculate();
+          resolve(cocomoRes);
+        });
+      });
+    }).catch((err: any) => {
+      throw new HttpException('Error Calculating COCOMO', HttpStatus.BAD_REQUEST);
+    });
   }
 }

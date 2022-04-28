@@ -7,6 +7,7 @@ import {
 import { CollectionReference, Timestamp } from '@google-cloud/firestore';
 import {CocomoModelDocument} from "../firestore/models/CocomoModel.document";
 import {FileService} from "./FileService";
+import {Cocomo, CocomoRequest} from "../models/COCOMO";
 
 
 @Injectable()

@@ -1,5 +1,8 @@
 import { IsNumber, IsString } from 'class-validator';
 import { FileService } from '../services/FileService';
+import {CocomoModelDocument} from "../firestore/models/CocomoModel.document";
+import {CocomoRatingDocument} from "../firestore/models/CocomoRating.document";
+import {Logger} from "@nestjs/common";
 
 export class Cocomo {
   linesOfCode: number;
@@ -29,6 +32,8 @@ export class Cocomo {
    * Get calculated Cocomo based on current model's values.
    */
   calculate = (): CocomoResponse => {
+    let logger: Logger = new Logger(Cocomo.name);
+    logger.debug('COCOMO.calculate() calculating')
     const calculatedScores: number[] = [];
     Object.keys(this).forEach((v: string, i: number, a: string[]) => {
       if (this.isCocomoRatingField(v) && typeof this[v] == 'number') {
@@ -52,12 +57,14 @@ export class Cocomo {
       developmentTime,
     );
     const totalHours: number = this.calculateHours(developmentTime);
-    return new CocomoResponse(
-      adjustedTime,
-      developmentTime,
-      staffingTime,
-      totalHours,
+    let cocomoRes: CocomoResponse = new CocomoResponse(
+        adjustedTime,
+        developmentTime,
+        staffingTime,
+        totalHours,
     );
+    logger.debug('COCOMO.calculate() finished calculation');
+    return cocomoRes
   };
 
   /**
@@ -141,25 +148,26 @@ export class Cocomo {
    * Static method to take in CocomoRequest and convert to a Cocomo model, with selected ratings converted to scores.
    * @param cocomoRequest
    */
-  static fromRequest = (cocomoRequest: CocomoRequest) => {
+  static fromRequest = (cocomoRequest: CocomoRequest, cocomoModelList: CocomoModelDocument[], cocomoRatingList: CocomoRatingDocument[]) => {
+    let logger: Logger = new Logger(Cocomo.name);
+    logger.debug('COCOMO.fromRequest() beginning conversion')
     const cocomo: Cocomo = new Cocomo();
-    const cocomoModelList = FileService.readCocomoModelList();
-    const cocomoRatingList = FileService.readCocomoRatingList();
     Object.keys(cocomoRequest).forEach((v: string, i: number, a: string[]) => {
       if (v != 'linesOfCode') {
         if (v == 'model') {
-          const variableRatings = cocomoModelList[cocomoRequest[v]];
+          const variableRatings = cocomoModelList.find(x => x.name).ratings;
           cocomo['a'] = variableRatings['a'];
           cocomo['b'] = variableRatings['b'];
           cocomo['c'] = variableRatings['c'];
           cocomo['d'] = variableRatings['d'];
         } else {
-          const cocomoRating = cocomoRatingList[v]['ratings'];
+          const cocomoRating = cocomoRatingList.find(x => x.name == v).ratings
           cocomo[v] = cocomoRating[cocomoRequest[v]];
         }
       }
     });
     cocomo.linesOfCode = cocomoRequest.linesOfCode / 1000;
+    logger.debug('COCOMO.fromRequest() ending conversion')
     return cocomo;
   };
 }
