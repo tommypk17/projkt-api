@@ -5,6 +5,8 @@ import {ConfigModule, ConfigService} from '@nestjs/config';
 import {CocomoModelsService} from "./services/CocomoModels.service";
 import {CocomoRatingsService} from "./services/CocomoRatings.service";
 import {AuthenticationMiddleware} from "./authentication/middleware/authentication.middleware";
+import {UsersController} from "./controllers/user/users.controller";
+import {UsersService} from "./services/Users.service";
 
 @Module({
   imports: [
@@ -19,17 +21,21 @@ import {AuthenticationMiddleware} from "./authentication/middleware/authenticati
       inject: [ConfigService],
     }),
   ],
-  controllers: [CocomoController],
+  controllers: [CocomoController, UsersController],
   providers: [
       CocomoModelsService,
       CocomoRatingsService,
+      UsersService,
       ConfigService
   ],
 })
 export class AppModule implements NestModule{
   configure(consumer: MiddlewareConsumer): any {
-    consumer.apply(AuthenticationMiddleware).forRoutes({
-      path: '', method: RequestMethod.ALL
-    });
+    consumer.apply(AuthenticationMiddleware).forRoutes(
+        {path: '/users/*', method: RequestMethod.ALL},
+        {path: '/cocomo/save', method: RequestMethod.POST},
+        {path: '/cocomo/mine', method: RequestMethod.GET},
+        {path: '/cocomo/mine/*', method: RequestMethod.GET}
+    );
   }
 }

@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import * as firebase from 'firebase-admin';
 import { Request, Response } from 'express';
 import { firebaseServiceAccount } from "../../environments/firebase.config";
+import {IAuthUser} from "../models/authentication.models";
 
 
 @Injectable()
@@ -23,11 +24,12 @@ export class AuthenticationMiddleware implements NestMiddleware {
         if (token != null && token != '') {
             this.app.auth().verifyIdToken(token.replace('Bearer ', ''))
                 .then(async (decodedToken) => {
-                    req['user'] = {
+                    let user: IAuthUser = {
                         uid: decodedToken.uid,
                         email: decodedToken.email,
                         roles: (decodedToken.roles || [])
                     };
+                    req['user'] = user;
                     next();
                 })
                 .catch(() => {
