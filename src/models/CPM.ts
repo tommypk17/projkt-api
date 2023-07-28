@@ -5,6 +5,40 @@ export class CriticalPath {
     private _nodes: CriticalPathNode[] = [];
     path: CriticalPathNode = null;
 
+    public static FakeCriticalPath(): CriticalPath {
+        let cpmA: CriticalPathNode = new CriticalPathNode('A', 2);
+        let cpmB: CriticalPathNode = new CriticalPathNode('B', 4);
+        let cpmC: CriticalPathNode = new CriticalPathNode('C', 10);
+        let cpmD: CriticalPathNode = new CriticalPathNode('D', 6);
+        let cpmE: CriticalPathNode = new CriticalPathNode('E', 4);
+        let cpmF: CriticalPathNode = new CriticalPathNode('F', 5);
+        let cpmG: CriticalPathNode = new CriticalPathNode('G', 7);
+        let cpmH: CriticalPathNode = new CriticalPathNode('H', 9);
+        let cpmI: CriticalPathNode = new CriticalPathNode('I', 7);
+        let cpmJ: CriticalPathNode = new CriticalPathNode('J', 8);
+        let cpmK: CriticalPathNode = new CriticalPathNode('K', 4);
+        let cpmL: CriticalPathNode = new CriticalPathNode('L', 5);
+        let cpmM: CriticalPathNode = new CriticalPathNode('M', 2);
+        let cpmN: CriticalPathNode = new CriticalPathNode('N', 6);
+
+        let cp: CriticalPath = new CriticalPath();
+        cp.add(cpmA);
+        cp.add(cpmB, [cpmA]);
+        cp.add(cpmC, [cpmB]);
+        cp.add(cpmD, [cpmC]);
+        cp.add(cpmE, [cpmC]);
+        cp.add(cpmF, [cpmE]);
+        cp.add(cpmG, [cpmD]);
+        cp.add(cpmH, [cpmG, cpmE]);
+        cp.add(cpmI, [cpmC]);
+        cp.add(cpmJ, [cpmF, cpmI]);
+        cp.add(cpmK, [cpmJ]);
+        cp.add(cpmL, [cpmJ]);
+        cp.add(cpmM, [cpmH]);
+        cp.add(cpmN, [cpmK, cpmL]);
+        return cp;
+    }
+
     find(name: string): CriticalPathNode | undefined {
         return this._nodes.find(x => x.name == name);
     }
@@ -60,29 +94,14 @@ export class CriticalPath {
             currentLevel = this.next(currentLevel);
         }
 
-        // //calculate the end's early start & finish
-        // this.path.earlyStart = this.path.previous.map(x => x.earlyStart)
-        //     .reduce((x1, x2) => {
-        //         return x1 > x2? x1: x2
-        //     });
-        // this.path.earlyFinish = this.path.previous.map(x => x.earlyFinish)
-        //     .reduce((x1, x2) => {
-        //         return x1 > x2? x1: x2
-        //     });
-        // //late finish & start of the end task will always be the earlyStart time (end task is a placeholder task)
-        // this.path.lateStart = this.path.earlyStart;
-        // this.path.lateFinish = this.path.earlyFinish;
-
         //calculate the lateStart & lateFinish
         //this traverses from the last item to the beginning items
         currentLevel = [this.path];
         let nextLevel: CriticalPathNode[] = []
-        let count = 0;
         while(currentLevel.length > 0){
             nextLevel = [];
             for(let node of currentLevel){
                 let successors = this.successors(node);
-                if(node.name == 'J') console.log(successors)
                 if(successors.length > 0){
                     node.lateFinish = successors.map(x => x.lateStart)
                         .reduce((x1, x2) => {
@@ -97,12 +116,29 @@ export class CriticalPath {
                         });
                     node.lateFinish = node.lateStart + node.duration;
                 }
+                node.float = node.lateFinish - node.earlyFinish;
+
                 if(node.previous && node.previous.length > 0) nextLevel = nextLevel.concat(node.previous);
             }
             currentLevel = nextLevel;
         }
 
         return this;
+    }
+
+    get criticalPath(): CriticalPathNode {
+        let criticalPath: CriticalPath = Object.assign(new CriticalPath(), this);
+        let criticalNodes: CriticalPathNode[] = criticalPath.calculate()._nodes.filter(x => x.float == 0).map(x => ({...x, previous: null}));
+
+        let currentLevel: CriticalPathNode[] = criticalPath.rootNodes;
+        while(currentLevel.length > 0){
+            for(let node of currentLevel){
+                if(node.previous != null) node.previous = node.previous.filter(x => criticalNodes.some(y => y.id == x.id));
+            }
+            currentLevel = this.next(currentLevel);
+        }
+
+        return criticalPath.path;
     }
 
     successors(node: CriticalPathNode): CriticalPathNode[] {
@@ -154,25 +190,6 @@ export class CriticalPathNode {
     previous: CriticalPathNode[] | null;
 }
 
-export class CriticalPathNodeRequest {
-    @IsString()
-    name: string;
+export class CriticalPathRequest {
 
-    @IsNumber()
-    duration: number;
-
-    @IsNumber()
-    earlyStart: number;
-
-    @IsNumber()
-    earlyFinish: number;
-
-    @IsNumber()
-    lateStart: number;
-
-    @IsNumber()
-    lateFinish: number;
-
-    @IsNumber()
-    float: number;
 }
