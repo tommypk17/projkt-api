@@ -148,6 +148,11 @@ export class CriticalPath {
         return criticalPath.path;
     }
 
+    get criticalPathNodes(): CriticalPathNode[] {
+        let criticalPath: CriticalPath = Object.assign(new CriticalPath(), this);
+        return criticalPath.calculate()._nodes.filter(x => x.float == 0).map(x => ({...x, previous: null}));
+    }
+
     get nodes(): CriticalPathNode[] {
         this.calculate();
         return this._nodes.filter((value, index, self) =>

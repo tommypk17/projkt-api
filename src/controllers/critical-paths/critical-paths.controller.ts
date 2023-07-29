@@ -61,7 +61,7 @@ export class CriticalPathsController {
         cp.add(cpmN, [cpmK, cpmL]);
 
         if(criticalPath == true) return cp.criticalPath;
-        if(flatten == true) return {nodes: cp.nodes, edges: cp.edges};
+        if(flatten == true) return {nodes: cp.nodes, edges: cp.edges, criticalPathNodes: cp.criticalPathNodes};
         cp.calculate();
         let res = {
             A: {
