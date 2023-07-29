@@ -10,6 +10,7 @@ import {FileService} from "./FileService";
 import {Cocomo, CocomoRequest} from "../models/COCOMO";
 import {UserDocument} from "../firestore/models/User.document";
 import {v4 as uuidv4} from 'uuid';
+import {CriticalPath, CriticalPathRequest} from "../models/CPM";
 
 
 @Injectable()
@@ -88,4 +89,41 @@ export class UsersService {
         return false;
     }
 
+    async getSavedCriticalPaths(userId: string): Promise<any[]> {
+        this.logger.debug(`initiate: UsersService.getSavedCriticalPaths(${userId})`)
+        let currentSavedCriticalPaths: any[] = [];
+        this.logger.debug(`UsersService.getSavedCriticalPaths(${userId}) get currently saved critical paths`)
+        const snapshot = await this.userCollection.doc(userId).get();
+        if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
+            currentSavedCriticalPaths = snapshot.data().savedCriticalPaths;
+            currentSavedCriticalPaths = currentSavedCriticalPaths.map(x => ({...x, path: JSON.parse(x.path) as CriticalPath}));
+        }
+        this.logger.debug(`UsersService.getSavedCriticalPaths(${userId}) number of critical paths: ${currentSavedCriticalPaths.length}`)
+        this.logger.debug(`return: UsersService.getSavedCriticalPaths(${userId})`)
+        return currentSavedCriticalPaths;
+    }
+
+    async saveCriticalPath(userId: string, criticalPath: any): Promise<boolean> {
+        this.logger.debug('initiate: UsersService.saveCriticalPath()')
+        let savedCriticalPaths: any[] = [];
+        this.logger.debug('UsersService.saveCriticalPath() get currently saved criticalPaths')
+        const snapshot = await this.userCollection.doc(userId).get();
+        if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
+            savedCriticalPaths = snapshot.data().savedCriticalPaths;
+        }
+        this.logger.debug('UsersService.saveCriticalPath() adding new saved criticalPath')
+        criticalPath.id = uuidv4();
+        criticalPath.date = Date();
+        criticalPath.path = JSON.stringify(CriticalPath.FakeCriticalPath().path);
+        savedCriticalPaths.push(criticalPath);
+        this.logger.debug('UsersService.saveCriticalPath() saving criticalPaths')
+        // @ts-ignore
+        return await this.userCollection.doc(userId).set({savedCriticalPaths: savedCriticalPaths}).then(() => {
+            this.logger.debug('return: UsersService.saveCriticalPath() saved')
+            return true;
+        }).catch((err) => {
+            this.logger.error(err);
+            return false;
+        });
+    }
 }
