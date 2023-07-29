@@ -28,7 +28,7 @@ export class CriticalPathsController {
     }
 
     @Get('test')
-    test(@Query('nodeName') nodeName: string | null, @Query('criticalPath') criticalPath: boolean | null, @Req() req: Request): any {
+    test(@Query('nodeName') nodeName: string | null, @Query('criticalPath') criticalPath: boolean | null, @Query('flatten') flatten: boolean | null, @Req() req: Request): any {
         let cpmA: CriticalPathNode = new CriticalPathNode('A', 2);
         let cpmB: CriticalPathNode = new CriticalPathNode('B', 4);
         let cpmC: CriticalPathNode = new CriticalPathNode('C', 10);
@@ -61,6 +61,7 @@ export class CriticalPathsController {
         cp.add(cpmN, [cpmK, cpmL]);
 
         if(criticalPath == true) return cp.criticalPath;
+        if(flatten == true) return {nodes: cp.nodes, edges: cp.edges};
         cp.calculate();
         let res = {
             A: {

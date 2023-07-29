@@ -3,6 +3,7 @@ import {v4 as uuidv4} from 'uuid';
 
 export class CriticalPath {
     private _nodes: CriticalPathNode[] = [];
+    private _edges: CriticalPathEdge[] = [];
     path: CriticalPathNode = null;
 
     public static FakeCriticalPath(): CriticalPath {
@@ -49,6 +50,9 @@ export class CriticalPath {
 
         if(previousNodes != null) {
             node.previous = previousNodes;
+            for(let prev of previousNodes){
+                this._edges.push({to: node.id, from: prev.id});
+            }
         }
 
         //always add the recent add to end node
@@ -68,7 +72,10 @@ export class CriticalPath {
 
         //remove any of the previous end nodes and add the most recent
         this._nodes = this._nodes.filter(x => x.name != 'end');
-        this._nodes.push(end)
+        this._nodes.push(end);
+
+        this._edges = this._edges.filter(x => x.to != end.id);
+        this._edges.push({to: end.id, from: node.id});
     }
 
     calculate(): CriticalPath {
@@ -141,6 +148,19 @@ export class CriticalPath {
         return criticalPath.path;
     }
 
+    get nodes(): CriticalPathNode[] {
+        this.calculate();
+        return this._nodes.filter((value, index, self) =>
+                index === self.findIndex((t) => (
+                    t.id === value.id
+                ))
+        ).map(x => ({...x, previous: null}));
+    }
+
+    get edges(): CriticalPathEdge[] {
+        return this._edges;
+    }
+
     successors(node: CriticalPathNode): CriticalPathNode[] {
         if(node == null) return [];
         return this._nodes.filter(x => x.previous != null && x.previous.some(y => y.id == node.id));
@@ -188,6 +208,11 @@ export class CriticalPathNode {
     }
 
     previous: CriticalPathNode[] | null;
+}
+
+export class CriticalPathEdge {
+    from: string;
+    to: string;
 }
 
 export class CriticalPathRequest {
