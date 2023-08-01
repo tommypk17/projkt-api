@@ -76,6 +76,11 @@ export class CriticalPath {
 
         this._edges = this._edges.filter(x => x.to != end.id);
         this._edges.push({to: end.id, from: node.id});
+
+        let unlinkedNodes = this._nodes.filter(x => !this._edges.some(y => y.from == x.id) && x.name != 'end')
+        unlinkedNodes.forEach(node => {
+           this._edges.push({from: node.id, to: end.id})
+        });
     }
 
     calculate(): CriticalPath {
