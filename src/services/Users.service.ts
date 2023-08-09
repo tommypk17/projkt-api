@@ -10,7 +10,7 @@ import {FileService} from "./FileService";
 import {Cocomo, CocomoRequest} from "../models/COCOMO";
 import {UserDocument} from "../firestore/models/User.document";
 import {v4 as uuidv4} from 'uuid';
-import {CriticalPath, CriticalPathRequest} from "../models/CPM";
+import {CriticalPath, CriticalPathNode, CriticalPathRequest} from "../models/CPM";
 
 
 @Injectable()
@@ -103,6 +103,23 @@ export class UsersService {
         return currentSavedCriticalPaths;
     }
 
+    async getSavedCriticalPath(userId: string, id: string): Promise<any> {
+        this.logger.debug(`initiate: UsersService.getSavedCriticalPath(${userId}, ${id})`)
+        let savedCriticalPaths: any[] = [];
+        this.logger.debug(`UsersService.getSavedCriticalPath(${userId}, ${id}) get currently saved critical paths`)
+        const snapshot = await this.userCollection.doc(userId).get();
+        if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
+            savedCriticalPaths = snapshot.data().savedCriticalPaths;
+            let found = savedCriticalPaths.find(x => x.id == id);
+            if(found) {
+                this.logger.debug(`return: UsersService.getSavedCriticalPath(${userId}, ${id}): Critical Path Found`)
+                return CriticalPath.FromString(found.path);
+            }
+        }
+        this.logger.debug(`return: UsersService.getSavedCriticalPath(${userId}, ${id}): Critical Path Not Found`)
+        return null;
+    }
+
     async saveCriticalPath(userId: string, criticalPath: any): Promise<boolean> {
         this.logger.debug('initiate: UsersService.saveCriticalPath()')
         let savedCriticalPaths: any[] = [];
@@ -114,7 +131,7 @@ export class UsersService {
         this.logger.debug('UsersService.saveCriticalPath() adding new saved criticalPath')
         criticalPath.id = uuidv4();
         criticalPath.date = Date();
-        criticalPath.path = JSON.stringify(CriticalPath.FakeCriticalPath().path);
+        criticalPath.path = JSON.stringify(CriticalPath.FakeCriticalPath());
         savedCriticalPaths.push(criticalPath);
         this.logger.debug('UsersService.saveCriticalPath() saving criticalPaths')
         // @ts-ignore

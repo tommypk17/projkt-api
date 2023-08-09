@@ -177,6 +177,56 @@ export class CriticalPathsController {
         });
     }
 
+    @Get('mine/names')
+    getSavedCriticalPathNames(@Req() req: Request): Promise<any> {
+        return new Promise<any>((resolve) => {
+            let user: IAuthUser = req['user'];
+            if(!user) throw new HttpException('Error Getting Saved Critical Paths, not logged in', HttpStatus.FORBIDDEN);
+            this._usersService.getSavedCriticalPaths(user.uid).then((res: any[]) => {
+                let names: { }[] = [];
+                if(res){
+                    res.forEach((criticalPath) => {
+                        names.push({id: criticalPath.id, name: criticalPath.name, date: Date.parse(criticalPath.date)});
+                    });
+                }
+                resolve(names);
+            });
+        }).catch((err: any) => {
+            this.logger.error(err);
+            throw new HttpException('Error Getting Saved Critical Paths', HttpStatus.BAD_REQUEST);
+        });
+    }
+
+    /**
+     * Get specific critical path
+     */
+    @Get('mine/:id')
+    getSavedCriticalPath(@Req() req: Request, @Param('id') id: string, @Query('criticalPath') criticalPath: boolean | null, @Query('flatten') flatten: boolean | null,): any {
+        let user: IAuthUser = req['user'];
+        let res: any | undefined;
+        this.logger.debug(`CriticalPathController.getSavedCriticalPath(${user.uid}, ${id}) get currently saved critical path`)
+        return new Promise<any>((resolve) => {
+            if(!user) throw new HttpException('Error Getting Saved Critical Paths, not logged in', HttpStatus.FORBIDDEN);
+            this._usersService.getSavedCriticalPath(user.uid, id).then((path: any) => {
+                if(path) this.logger.debug(`CriticalPathController.getSavedCriticalPath(${user.uid}, ${id}) Saved Critical Path found`)
+                else this.logger.debug(`CriticalPathController.getSavedCriticalPath(${user.uid}, ${id}) Saved Critical Path not found!`)
+                if(criticalPath == true) {
+                    this.logger.debug(`CriticalPathController.getSavedCriticalPath(${user.uid}, ${id}) Returning Critical Path`)
+                    res = path.criticalPath;
+                }
+                if(flatten == true){
+                    res = path.calculate();
+                    this.logger.debug(`CriticalPathController.getSavedCriticalPath(${user.uid}, ${id}) Returning Flattened Graph`)
+                    res = {nodes: path.nodes, edges: path.edges, criticalPathNodes: path.criticalPathNodes};
+                }
+                resolve(res);
+            });
+        }).catch((err: any) => {
+            this.logger.error(err);
+            throw new HttpException('Error Getting Saved Critical Paths', HttpStatus.BAD_REQUEST);
+        });
+    }
+
     @Post('save')
     saveCriticalPath(@Body() criticalPathRequest: any, @Req() req: Request): any {
         return new Promise<any>((resolve) => {

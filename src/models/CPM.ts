@@ -6,6 +6,35 @@ export class CriticalPath {
     private _edges: CriticalPathEdge[] = [];
     path: CriticalPathNode = null;
 
+    //need to read in from string and create new object
+    public static FromString(obj: string): CriticalPath {
+        let reconstructed = new CriticalPath();
+        let temp = Object.assign({}, JSON.parse(obj));
+
+        let allNodes: {key: string, node: CriticalPathNode}[] = [];
+
+        temp._nodes.forEach(node => {
+            allNodes.push({key: node.id, node: new CriticalPathNode(node.name, node.duration)});
+        })
+
+        temp._nodes.map(x => ({...x, previous: null})).forEach(node => {
+            let previousEdges = temp._edges.filter(x => x.to == node.id);
+            let previousNodes = temp._nodes.filter(x => previousEdges.some(y => y.from == x.id));
+            if(node.name != 'end'){
+                let found = allNodes.find(x => x.key == node.id);
+                if(found){
+                    if(previousNodes.length == 0) {
+                        reconstructed.add(found.node);
+                    }
+                    else{
+                        reconstructed.add(found.node, allNodes.filter(x => previousNodes.some(y => y.id == x.key)).map(x => x.node));
+                    }
+                }
+            }
+        });
+        return reconstructed;
+    }
+
     public static FakeCriticalPath(): CriticalPath {
         let cpmA: CriticalPathNode = new CriticalPathNode('A', 2);
         let cpmB: CriticalPathNode = new CriticalPathNode('B', 4);
@@ -84,7 +113,6 @@ export class CriticalPath {
     }
 
     calculate(): CriticalPath {
-
         let currentLevel: CriticalPathNode[] = this.rootNodes;
         while(currentLevel.length > 0){
             for(let node of currentLevel){
@@ -134,15 +162,13 @@ export class CriticalPath {
             }
             currentLevel = nextLevel;
         }
-
         return this;
     }
 
     get criticalPath(): CriticalPathNode {
-        let criticalPath: CriticalPath = Object.assign(new CriticalPath(), this);
-        let criticalNodes: CriticalPathNode[] = criticalPath.calculate()._nodes.filter(x => x.float == 0).map(x => ({...x, previous: null}));
+        let criticalNodes: CriticalPathNode[] = this._nodes.filter(x => x.float == 0).map(x => ({...x, previous: null}));
 
-        let currentLevel: CriticalPathNode[] = criticalPath.rootNodes;
+        let currentLevel: CriticalPathNode[] = this.rootNodes;
         while(currentLevel.length > 0){
             for(let node of currentLevel){
                 if(node.previous != null) node.previous = node.previous.filter(x => criticalNodes.some(y => y.id == x.id));
@@ -150,16 +176,14 @@ export class CriticalPath {
             currentLevel = this.next(currentLevel);
         }
 
-        return criticalPath.path;
+        return this.path;
     }
 
     get criticalPathNodes(): CriticalPathNode[] {
-        let criticalPath: CriticalPath = Object.assign(new CriticalPath(), this);
-        return criticalPath.calculate()._nodes.filter(x => x.float == 0).map(x => ({...x, previous: null}));
+        return this._nodes.filter(x => x.float == 0).map(x => ({...x, previous: null}));
     }
 
     get nodes(): CriticalPathNode[] {
-        this.calculate();
         return this._nodes.filter((value, index, self) =>
                 index === self.findIndex((t) => (
                     t.id === value.id
