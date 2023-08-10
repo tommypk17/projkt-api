@@ -143,4 +143,40 @@ export class UsersService {
             return false;
         });
     }
+
+    async addCriticalPathNode(userId: string, node: any, graphId: string): Promise<boolean> {
+        this.logger.debug('initiate: UsersService.saveCriticalPath()')
+        let savedCriticalPaths: any[] = [];
+        this.logger.debug('UsersService.saveCriticalPath() get currently saved criticalPaths')
+        const snapshot = await this.userCollection.doc(userId).get();
+        if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
+            savedCriticalPaths = snapshot.data().savedCriticalPaths;
+        }
+        this.logger.debug('UsersService.saveCriticalPath() adding new saved criticalPath')
+
+        let currentPath = savedCriticalPaths.find(x => x.id == graphId);
+        if(currentPath == -1) {
+            this.logger.debug(`UsersService.saveCriticalPath() no graph of ID ${graphId} found`)
+            return await new Promise(() => {return false});
+        }
+
+        let foundCriticalPath = currentPath;
+
+        let pathToUpdate = CriticalPath.FromString(foundCriticalPath.path);
+        let previousNodes = pathToUpdate.nodes.filter(x => node.previous.some(y => y == x.id));
+        let newNode = new CriticalPathNode(node.name, node.duration);
+        pathToUpdate.add(newNode, previousNodes);
+
+        currentPath.path = JSON.stringify(pathToUpdate);
+
+        this.logger.debug('UsersService.saveCriticalPath() saving criticalPaths')
+        // @ts-ignore
+        return await this.userCollection.doc(userId).set({savedCriticalPaths: savedCriticalPaths}).then(() => {
+            this.logger.debug('return: UsersService.saveCriticalPath() saved')
+            return true;
+        }).catch((err) => {
+            this.logger.error(err);
+            return false;
+        });
+    }
 }

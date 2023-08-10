@@ -1,4 +1,4 @@
-import {IsNumber, IsString} from "class-validator";
+import {IsArray, IsNumber, IsString} from "class-validator";
 import {v4 as uuidv4} from 'uuid';
 
 export class CriticalPath {
@@ -14,7 +14,7 @@ export class CriticalPath {
         let allNodes: {key: string, node: CriticalPathNode}[] = [];
 
         temp._nodes.forEach(node => {
-            allNodes.push({key: node.id, node: new CriticalPathNode(node.name, node.duration)});
+            allNodes.push({key: node.id, node: new CriticalPathNode(node.name, node.duration, node.id)});
         })
 
         temp._nodes.map(x => ({...x, previous: null})).forEach(node => {
@@ -234,8 +234,9 @@ export class CriticalPathNode {
     lateFinish: number;
     float: number;
 
-    constructor(name: string, duration: number) {
-        this.id = uuidv4();
+    constructor(name: string, duration: number, id?: string) {
+        if(id != undefined) this.id = id;
+        else this.id = uuidv4();
         this.name = name;
         this.duration = duration;
         this.previous = null;
@@ -251,4 +252,15 @@ export class CriticalPathEdge {
 
 export class CriticalPathRequest {
 
+}
+
+export class CriticalPathNodeRequest {
+    @IsString()
+    name: string;
+
+    @IsNumber()
+    duration: number;
+
+    @IsArray()
+    previous: string[];
 }
