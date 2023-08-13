@@ -112,6 +112,26 @@ export class CriticalPath {
         });
     }
 
+    //we should make this smarter.
+    //if a node is removed, find its parent and child and create the new connection for the orphan
+    //might be a challenge. Will have to recreate the node structure with all the previouses reset
+    remove(nodeId: string) {
+        let edgeIdxs: number[] = [];
+        let nodeIdxs: number[] = [];
+        this._edges.forEach((edge, i, a) => {
+            if(edge.from == nodeId || edge.to == nodeId)  edgeIdxs.push(i);
+        });
+        this._nodes.forEach((node, i, a) => {
+           if(node.id == nodeId) nodeIdxs.push(i);
+        });
+        edgeIdxs.forEach((i) => {
+           this._edges.splice(i, 1);
+        });
+        nodeIdxs.forEach((i) => {
+            this._nodes.splice(i, 1);
+        });
+    }
+
     calculate(): CriticalPath {
         let currentLevel: CriticalPathNode[] = this.rootNodes;
         while(currentLevel.length > 0){

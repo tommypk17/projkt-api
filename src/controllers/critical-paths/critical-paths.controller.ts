@@ -1,6 +1,6 @@
 import {
     Body,
-    Controller,
+    Controller, Delete,
     Get,
     HttpException,
     HttpStatus,
@@ -249,6 +249,20 @@ export class CriticalPathsController {
             if(!user) throw new HttpException('Error Saving Critical Path, not logged in', HttpStatus.FORBIDDEN);
             this._usersService.addCriticalPathNode(user.uid, node, id).then((res: boolean) => {
                resolve(res);
+            });
+        }).catch((err: any) => {
+            this.logger.error(err);
+            throw new HttpException('Error Getting Saved Critical Paths', HttpStatus.BAD_REQUEST);
+        });
+    }
+
+    @Delete('mine/:id/nodes/:nodeId')
+    removeCriticalPathNode(@Param('id') id: string, @Param('nodeId') nodeId: string, @Req() req: Request): Promise<boolean> {
+        return new Promise<boolean>((resolve) => {
+            let user: IAuthUser = req['user'];
+            if(!user) throw new HttpException('Error Saving Critical Path, not logged in', HttpStatus.FORBIDDEN);
+            this._usersService.removeCriticalPathNode(user.uid, nodeId, id).then((res: boolean) => {
+                resolve(res);
             });
         }).catch((err: any) => {
             this.logger.error(err);
