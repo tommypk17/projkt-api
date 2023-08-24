@@ -130,6 +130,7 @@ export class UsersService {
         }
         this.logger.debug('UsersService.saveCriticalPath() adding new saved criticalPath')
         criticalPath.id = uuidv4();
+        criticalPath.name = 'CriticalPathName';
         criticalPath.date = Date();
         criticalPath.path = JSON.stringify(CriticalPath.FakeCriticalPath());
         savedCriticalPaths.push(criticalPath);

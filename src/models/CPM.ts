@@ -4,7 +4,11 @@ import {v4 as uuidv4} from 'uuid';
 export class CriticalPath {
     private _nodes: CriticalPathNode[] = [];
     private _edges: CriticalPathEdge[] = [];
-    path: CriticalPathNode = null;
+    private _isCalculated: boolean = false;
+
+    constructor() {
+        this._nodes.push(new CriticalPathNode('end', 0))
+    }
 
     //need to read in from string and create new object
     public static FromString(obj: string): CriticalPath {
@@ -72,78 +76,66 @@ export class CriticalPath {
     find(name: string): CriticalPathNode | undefined {
         return this._nodes.find(x => x.name == name);
     }
-    add(node: CriticalPathNode, previousNodes: CriticalPathNode[] | null = null) {
-        //always create an end node
-        let end: CriticalPathNode = this.path;
-        if(end == null || end.name != 'end')  end = new CriticalPathNode('end', 0);
 
+    add(node: CriticalPathNode, previousNodes: CriticalPathNode[] | null = null) {
         if(previousNodes != null) {
-            node.previous = previousNodes;
             for(let prev of previousNodes){
                 this._edges.push({to: node.id, from: prev.id});
             }
         }
 
-        //always add the recent add to end node
-        if(end.previous == null) end.previous = [];
-
-        if(previousNodes != null) {
-            for(let previousNode of previousNodes){
-                let toRemoveIdx = end.previous.findIndex(x => x.id == previousNode.id);
-                if(toRemoveIdx > -1) end.previous.splice(toRemoveIdx, 1);
-            }
-        }
-
-        end.previous.push(node);
-
-        this.path = end;
         this._nodes.push(node)
 
-        //remove any of the previous end nodes and add the most recent
-        this._nodes = this._nodes.filter(x => x.name != 'end');
-        this._nodes.push(end);
+        let end: CriticalPathNode = this._nodes.find(x => x.name == 'end');
+        this._edges.forEach((edge, i) => {
+            if(edge.to == end.id) this._edges.splice(i, 1);
+        });
 
-        this._edges = this._edges.filter(x => x.to != end.id);
-        this._edges.push({to: end.id, from: node.id});
-
-        let unlinkedNodes = this._nodes.filter(x => !this._edges.some(y => y.from == x.id) && x.name != 'end')
+        let unlinkedNodes = this._nodes.filter(x => !this._edges.some(y => y.from == x.id) && x.id != end.id)
         unlinkedNodes.forEach(node => {
            this._edges.push({from: node.id, to: end.id})
         });
     }
 
-    //we should make this smarter.
-    //if a node is removed, find its parent and child and create the new connection for the orphan
-    //might be a challenge. Will have to recreate the node structure with all the previouses reset
-    remove(nodeId: string) {
-        let edgeIdxs: number[] = [];
-        let nodeIdxs: number[] = [];
+    link(from: string, to: string): void {
+        if(!this._nodes.some(x => x.id == from)) throw new Error(`Invalid From: ${from} is not a known node id`)
+        if(!this._nodes.some(x => x.id == to)) throw new Error(`Invalid From: ${to} is not a known node id`)
+        this._edges.push({from: from, to: to});
+    }
+
+    unlink(from: string, to: string): void {
+        let found = this._edges.findIndex(x => x.from == from && x.to == to);
+        if(found <= -1) throw new Error(`Invalid Edge: from:${from} to: ${to}`);
+
+        this._edges.splice(found, 1);
+    }
+
+    remove(nodeId: string): void {
+        //find all applicable edges
         this._edges.forEach((edge, i, a) => {
-            if(edge.from == nodeId || edge.to == nodeId)  edgeIdxs.push(i);
+            if(edge.from == nodeId || edge.to == nodeId){
+                this._edges.splice(i, 1);
+            }
         });
-        this._nodes.forEach((node, i, a) => {
-           if(node.id == nodeId) nodeIdxs.push(i);
-        });
-        edgeIdxs.forEach((i) => {
-           this._edges.splice(i, 1);
-        });
-        nodeIdxs.forEach((i) => {
-            this._nodes.splice(i, 1);
-        });
+
+        //find applicable node
+        let nodeIdx = this._nodes.findIndex(x => x.id == nodeId);
+        if(nodeIdx > -1) this._nodes.splice(nodeIdx, 1);
     }
 
     calculate(): CriticalPath {
         let currentLevel: CriticalPathNode[] = this.rootNodes;
         while(currentLevel.length > 0){
             for(let node of currentLevel){
+                let previousNodes: CriticalPathNode[] = this.findPreviousNodes(node.id);
                 //if we are at the root, just set to 0 start
-                if(node.previous == null) {
+                if(previousNodes.length == 0) {
                     node.earlyStart = 0;
                     node.earlyFinish = node.earlyStart + node.duration;
                 }else{
                     //otherwise, set start to the largest previous start
                     //map reduce, create array of early finish, then select the largest of the options
-                    node.earlyStart = node.previous
+                    node.earlyStart = previousNodes
                                             .map(x => x.earlyFinish)
                                             .reduce((x1, x2) => {
                                                 return x1 > x2? x1: x2
@@ -156,11 +148,12 @@ export class CriticalPath {
 
         //calculate the lateStart & lateFinish
         //this traverses from the last item to the beginning items
-        currentLevel = [this.path];
+        currentLevel = [this.find('end')];
         let nextLevel: CriticalPathNode[] = []
         while(currentLevel.length > 0){
             nextLevel = [];
             for(let node of currentLevel){
+                let previousNodes: CriticalPathNode[] = this.findPreviousNodes(node.id);
                 let successors = this.successors(node);
                 if(successors.length > 0){
                     node.lateFinish = successors.map(x => x.lateStart)
@@ -170,7 +163,7 @@ export class CriticalPath {
                     node.lateStart = node.lateFinish - node.duration;
                 }else{
                     //if we are at the end, use the largest early finish as the lateStart
-                    node.lateStart = node.previous.map(x => x.earlyFinish)
+                    node.lateStart = previousNodes.map(x => x.earlyFinish)
                         .reduce((x1, x2) => {
                             return x1 > x2? x1: x2
                         });
@@ -178,29 +171,17 @@ export class CriticalPath {
                 }
                 node.float = node.lateFinish - node.earlyFinish;
 
-                if(node.previous && node.previous.length > 0) nextLevel = nextLevel.concat(node.previous);
+                if(previousNodes.length > 0) nextLevel = nextLevel.concat(previousNodes);
             }
             currentLevel = nextLevel;
         }
+        this._isCalculated = true;
         return this;
     }
 
-    get criticalPath(): CriticalPathNode {
-        let criticalNodes: CriticalPathNode[] = this._nodes.filter(x => x.float == 0).map(x => ({...x, previous: null}));
-
-        let currentLevel: CriticalPathNode[] = this.rootNodes;
-        while(currentLevel.length > 0){
-            for(let node of currentLevel){
-                if(node.previous != null) node.previous = node.previous.filter(x => criticalNodes.some(y => y.id == x.id));
-            }
-            currentLevel = this.next(currentLevel);
-        }
-
-        return this.path;
-    }
-
-    get criticalPathNodes(): CriticalPathNode[] {
-        return this._nodes.filter(x => x.float == 0).map(x => ({...x, previous: null}));
+    get criticalPath(): CriticalPathNode[] {
+        if(!this._isCalculated) throw Error('The critical path must first be calculated')
+        return this._nodes.filter(x => x.float == 0);
     }
 
     get nodes(): CriticalPathNode[] {
@@ -215,32 +196,25 @@ export class CriticalPath {
         return this._edges;
     }
 
+    findPreviousNodes(id: string): CriticalPathNode[] {
+        return this._nodes.filter(x => this._edges.some(y => y.to == id && y.from == x.id));
+    }
+
     successors(node: CriticalPathNode): CriticalPathNode[] {
         if(node == null) return [];
-        return this._nodes.filter(x => x.previous != null && x.previous.some(y => y.id == node.id));
+        return this._nodes.filter(x => this.findPreviousNodes(x.id).some(y => y.id == node.id));
+        return [];
     }
 
     next(level: CriticalPathNode[]): CriticalPathNode[] {
         let nextLevel: CriticalPathNode[] = [];
-        nextLevel = this._nodes.filter(x => x.previous != null && x.previous.some(y => level.some(z => y.id == z.id)));
+        nextLevel = this._nodes.filter(x => this.findPreviousNodes(x.id).some(y => level.some(z => y.id == z.id)));
         return nextLevel;
+        return [];
     }
 
     get rootNodes(): CriticalPathNode[] {
-        return this._nodes.filter(x => x.previous == null);
-    }
-
-    calculate_recurse(currentLevelNodes: CriticalPathNode[], previousNode: CriticalPathNode): CriticalPathNode {
-        return null;
-    }
-
-    private nextLevel(roots: CriticalPathNode[]): CriticalPathNode[] {
-        let level: CriticalPathNode[] = [];
-        for(let root of roots){
-            let levelNodes = this._nodes.filter(x => x.previous != null && x.previous.some(y => y.id == root.id));
-            for(let levelNode of levelNodes) level.push(levelNode);
-        }
-        return level;
+        return this._nodes.filter(x => this.findPreviousNodes(x.id).length == 0);
     }
 }
 
@@ -259,10 +233,7 @@ export class CriticalPathNode {
         else this.id = uuidv4();
         this.name = name;
         this.duration = duration;
-        this.previous = null;
     }
-
-    previous: CriticalPathNode[] | null;
 }
 
 export class CriticalPathEdge {

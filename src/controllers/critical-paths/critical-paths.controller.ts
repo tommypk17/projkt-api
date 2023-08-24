@@ -61,7 +61,7 @@ export class CriticalPathsController {
         cp.add(cpmN, [cpmK, cpmL]);
 
         if(criticalPath == true) return cp.criticalPath;
-        if(flatten == true) return {nodes: cp.nodes, edges: cp.edges, criticalPathNodes: cp.criticalPathNodes};
+        if(flatten == true) return {nodes: cp.nodes, edges: cp.edges, criticalPathNodes: cp.criticalPath};
         cp.calculate();
         let res = {
             A: {
@@ -157,7 +157,7 @@ export class CriticalPathsController {
         }
         // return res;
         if(nodeName != null) return cp.find(nodeName);
-        return cp.path;
+        return cp;
     }
 
     /**
@@ -217,7 +217,7 @@ export class CriticalPathsController {
                 if(flatten == true){
                     res = path.calculate();
                     this.logger.debug(`CriticalPathController.getSavedCriticalPath(${user.uid}, ${id}) Returning Flattened Graph`)
-                    res = {nodes: path.nodes, edges: path.edges, criticalPathNodes: path.criticalPathNodes};
+                    res = {nodes: path.nodes, edges: path.edges, criticalPathNodes: path.criticalPath};
                 }
                 resolve(res);
             });
