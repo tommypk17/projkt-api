@@ -10,6 +10,13 @@ export class CriticalPath {
         this._nodes.push(new CriticalPathNode('end', 0))
     }
 
+    public static FromPOJO(nodes: any[], edges: any[]){
+        let newPath = new CriticalPath();
+        newPath._nodes = nodes;
+        newPath._edges = edges;
+        return newPath;
+    }
+
     //need to read in from string and create new object
     public static FromString(obj: string): CriticalPath {
         let reconstructed = new CriticalPath();
@@ -185,11 +192,7 @@ export class CriticalPath {
     }
 
     get nodes(): CriticalPathNode[] {
-        return this._nodes.filter((value, index, self) =>
-                index === self.findIndex((t) => (
-                    t.id === value.id
-                ))
-        ).map(x => ({...x, previous: null}));
+        return this._nodes;
     }
 
     get edges(): CriticalPathEdge[] {
@@ -241,10 +244,6 @@ export class CriticalPathEdge {
     to: string;
 }
 
-export class CriticalPathRequest {
-
-}
-
 export class CriticalPathNodeRequest {
     @IsString()
     name: string;
@@ -254,4 +253,12 @@ export class CriticalPathNodeRequest {
 
     @IsArray()
     previous: string[];
+}
+
+export class CriticalPathEdgeRequest {
+    @IsString()
+    from: string;
+
+    @IsString()
+    to: string;
 }

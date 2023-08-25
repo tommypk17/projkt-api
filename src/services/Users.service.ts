@@ -2,15 +2,13 @@ import {
     Injectable,
     Inject,
     Logger,
-    InternalServerErrorException,
 } from '@nestjs/common';
 import { CollectionReference, Timestamp } from '@google-cloud/firestore';
-import {CocomoModelDocument} from "../firestore/models/CocomoModel.document";
-import {FileService} from "./FileService";
 import {Cocomo, CocomoRequest} from "../models/COCOMO";
 import {UserDocument} from "../firestore/models/User.document";
 import {v4 as uuidv4} from 'uuid';
-import {CriticalPath, CriticalPathNode, CriticalPathRequest} from "../models/CPM";
+import {CriticalPath, CriticalPathNode } from "../models/CPM";
+import {Serializer} from "../firestore/utilities/Serializer";
 
 
 @Injectable()
@@ -96,7 +94,6 @@ export class UsersService {
         const snapshot = await this.userCollection.doc(userId).get();
         if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
             currentSavedCriticalPaths = snapshot.data().savedCriticalPaths;
-            currentSavedCriticalPaths = currentSavedCriticalPaths.map(x => ({...x, path: JSON.parse(x.path) as CriticalPath}));
         }
         this.logger.debug(`UsersService.getSavedCriticalPaths(${userId}) number of critical paths: ${currentSavedCriticalPaths.length}`)
         this.logger.debug(`return: UsersService.getSavedCriticalPaths(${userId})`)
@@ -113,7 +110,7 @@ export class UsersService {
             let found = savedCriticalPaths.find(x => x.id == id);
             if(found) {
                 this.logger.debug(`return: UsersService.getSavedCriticalPath(${userId}, ${id}): Critical Path Found`)
-                return CriticalPath.FromString(found.path);
+                return CriticalPath.FromPOJO(found.nodes, found.edges);
             }
         }
         this.logger.debug(`return: UsersService.getSavedCriticalPath(${userId}, ${id}): Critical Path Not Found`)
@@ -132,7 +129,9 @@ export class UsersService {
         criticalPath.id = uuidv4();
         criticalPath.name = 'CriticalPathName';
         criticalPath.date = Date();
-        criticalPath.path = JSON.stringify(CriticalPath.FakeCriticalPath());
+        let fk = CriticalPath.FakeCriticalPath();
+        criticalPath.nodes = Serializer.ForFirestore(fk.nodes);
+        criticalPath.edges = Serializer.ForFirestore(fk.edges);
         savedCriticalPaths.push(criticalPath);
         this.logger.debug('UsersService.saveCriticalPath() saving criticalPaths')
         // @ts-ignore
@@ -197,12 +196,12 @@ export class UsersService {
             return await new Promise(() => {return false});
         }
 
-        let foundCriticalPath = currentPath;
+        let foundCriticalPath = CriticalPath.FromPOJO(currentPath.nodes, currentPath.edges);
 
-        let pathToUpdate = CriticalPath.FromString(foundCriticalPath.path);
-        pathToUpdate.remove(nodeId);
+        foundCriticalPath.remove(nodeId);
 
-        currentPath.path = JSON.stringify(pathToUpdate);
+        currentPath.nodes = Serializer.ForFirestore(foundCriticalPath.nodes);
+        currentPath.edges = Serializer.ForFirestore(foundCriticalPath.edges);
 
         this.logger.debug('UsersService.removeCriticalPathNode() saving criticalPaths')
         // @ts-ignore
