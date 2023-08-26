@@ -131,6 +131,7 @@ export class CriticalPath {
     }
 
     calculate(): CriticalPath {
+        if(!this._nodes.some(x => x.name != 'end')) return this;
         let currentLevel: CriticalPathNode[] = this.rootNodes;
         while(currentLevel.length > 0){
             for(let node of currentLevel){

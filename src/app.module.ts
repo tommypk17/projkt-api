@@ -8,6 +8,7 @@ import {AuthenticationMiddleware} from "./authentication/middleware/authenticati
 import {UsersController} from "./controllers/user/users.controller";
 import {UsersService} from "./services/Users.service";
 import { CriticalPathsController } from './controllers/critical-paths/critical-paths.controller';
+import {CriticalPathsService} from "./services/CriticalPaths.service";
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CriticalPathsController } from './controllers/critical-paths/critical-p
       CocomoModelsService,
       CocomoRatingsService,
       UsersService,
+      CriticalPathsService,
       ConfigService
   ],
 })
