@@ -173,12 +173,12 @@ export class CriticalPathsController {
      * Get rating names as list
      */
     @Get('mine')
-    getSavedCriticalPaths(@Req() req: Request): any {
+    getSavedCriticalPaths(@Req() req: Request): Promise<any> {
         return new Promise<any>((resolve) => {
             let user: IAuthUser = req['user'];
             if(!user) throw new HttpException('Error Getting Saved Critical Paths, not logged in', HttpStatus.FORBIDDEN);
             this._criticalPathsService.getSavedCriticalPaths(user.uid).then((res: any[]) => {
-                resolve(res);
+                resolve({data:res});
             });
         }).catch((err: any) => {
             this.logger.error(err);
@@ -198,7 +198,7 @@ export class CriticalPathsController {
                         names.push({id: criticalPath.id, name: criticalPath.name, date: Date.parse(criticalPath.date)});
                     });
                 }
-                resolve(names);
+                resolve({data: names});
             });
         }).catch((err: any) => {
             this.logger.error(err);
@@ -210,7 +210,7 @@ export class CriticalPathsController {
      * Get specific critical path
      */
     @Get('mine/:id')
-    getSavedCriticalPath(@Req() req: Request, @Param('id') id: string, @Query('criticalPath') criticalPath: boolean | null, @Query('flatten') flatten: boolean | null,): any {
+    getSavedCriticalPath(@Req() req: Request, @Param('id') id: string, @Query('criticalPath') criticalPath: boolean | null, @Query('flatten') flatten: boolean | null,): Promise<any> {
         let user: IAuthUser = req['user'];
         let res: any | undefined;
         this.logger.debug(`CriticalPathController.getSavedCriticalPath(${user.uid}, ${id}) get currently saved critical path`)
@@ -232,7 +232,7 @@ export class CriticalPathsController {
                         res = {nodes: path.nodes, edges: path.edges, criticalPathNodes: []}
                     }
                 }
-                resolve(res);
+                resolve({data: res});
             });
         }).catch((err: any) => {
             this.logger.error(err);
@@ -246,7 +246,7 @@ export class CriticalPathsController {
             let user: IAuthUser = req['user'];
             if(!user) throw new HttpException('Error Saving Critical Path, not logged in', HttpStatus.FORBIDDEN);
             this._criticalPathsService.saveCriticalPath(user.uid, criticalPathRequest).then((res: boolean) => {
-                resolve(res);
+                resolve({data:res});
             });
         }).catch((err: any) => {
             this.logger.error(err);
@@ -256,12 +256,12 @@ export class CriticalPathsController {
 
 
     @Post('mine/:id/nodes')
-    addCriticalPathNode(@Param('id') id: string, @Body() node: CriticalPathNodeRequest, @Req() req: Request): Promise<boolean> {
-        return new Promise<boolean>((resolve) => {
+    addCriticalPathNode(@Param('id') id: string, @Body() node: CriticalPathNodeRequest, @Req() req: Request): Promise<any> {
+        return new Promise<any>((resolve) => {
             let user: IAuthUser = req['user'];
             if(!user) throw new HttpException('Error Saving Critical Path, not logged in', HttpStatus.FORBIDDEN);
             this._criticalPathsService.addCriticalPathNode(user.uid, node, id).then((res: boolean) => {
-               resolve(res);
+               resolve({message: 'Node successfully added', data:res});
             });
         }).catch((err: any) => {
             this.logger.error(err);
@@ -270,12 +270,12 @@ export class CriticalPathsController {
     }
 
     @Delete('mine/:id/nodes/:nodeId')
-    removeCriticalPathNode(@Param('id') id: string, @Param('nodeId') nodeId: string, @Req() req: Request): Promise<boolean> {
-        return new Promise<boolean>((resolve) => {
+    removeCriticalPathNode(@Param('id') id: string, @Param('nodeId') nodeId: string, @Req() req: Request): Promise<any> {
+        return new Promise<any>((resolve) => {
             let user: IAuthUser = req['user'];
             if(!user) throw new HttpException('Error Saving Critical Path, not logged in', HttpStatus.FORBIDDEN);
             this._criticalPathsService.removeCriticalPathNode(user.uid, nodeId, id).then((res: boolean) => {
-                resolve(res);
+                resolve({message: 'Node Successfully removed', data:res});
             });
         }).catch((err: any) => {
             this.logger.error(err);
@@ -284,12 +284,12 @@ export class CriticalPathsController {
     }
 
     @Post('mine/:id/edges')
-    addCriticalPathEdge(@Param('id') id: string, @Body() edge: CriticalPathEdgeRequest, @Req() req: Request): Promise<boolean> {
-        return new Promise<boolean>((resolve) => {
+    addCriticalPathEdge(@Param('id') id: string, @Body() edge: CriticalPathEdgeRequest, @Req() req: Request): Promise<any> {
+        return new Promise<any>((resolve) => {
             let user: IAuthUser = req['user'];
             if(!user) throw new HttpException('Error Saving Critical Path, not logged in', HttpStatus.FORBIDDEN);
             this._criticalPathsService.addCriticalPathEdge(user.uid, id, edge).then((res: boolean) => {
-                resolve(res);
+                resolve({message: 'Edge successfully added', data:res});
             });
         }).catch((err: any) => {
             this.logger.error(err);
@@ -298,12 +298,12 @@ export class CriticalPathsController {
     }
 
     @Delete('mine/:id/edges/:from/:to')
-    removeCriticalPathEdge(@Param('id') id: string, @Param('from') from: string, @Param('to') to: string, @Req() req: Request): Promise<boolean> {
-        return new Promise<boolean>((resolve) => {
+    removeCriticalPathEdge(@Param('id') id: string, @Param('from') from: string, @Param('to') to: string, @Req() req: Request): Promise<any> {
+        return new Promise<any>((resolve) => {
             let user: IAuthUser = req['user'];
             if(!user) throw new HttpException('Error Saving Critical Path, not logged in', HttpStatus.FORBIDDEN);
             this._criticalPathsService.removeCriticalPathEdge(user.uid, id, {to, from}).then((res: boolean) => {
-                resolve(res);
+                resolve({message: 'Edge successfully removed', data: res});
             });
         }).catch((err: any) => {
             this.logger.error(err);
