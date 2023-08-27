@@ -79,7 +79,7 @@ export class UsersService {
         this.logger.debug(`initiate: UsersService.hasSavedCocomos(${userId})`)
         this.logger.debug(`UsersService.hasSavedCocomos(${userId}) get currently saved cocomos`)
         const snapshot = await this.userCollection.doc(userId).get();
-        if(snapshot && snapshot.data() && snapshot.data().savedCOCOMOs.length > 0){
+        if(snapshot && snapshot.data() && snapshot.data().savedCOCOMOs && snapshot.data().savedCOCOMOs.length > 0){
             this.logger.debug(`return: UsersService.hasSavedCocomos(${userId}) at least 1 saved cocomo`)
             return true;
         }

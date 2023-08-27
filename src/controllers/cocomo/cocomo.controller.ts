@@ -33,39 +33,42 @@ export class CocomoController {
    * Get rating names as list
    */
   @Get('ratings')
-  getRatings(@Req() req: Request): any {
-    const res = this._cocomoRatingService.getCocomoRatingsNames();
-    if (res) {
-      return res;
-    } else {
-      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
-    }
+  getRatings(@Req() req: Request): Promise<any> {
+    return new Promise<any>((resolve, err) => {
+      this._cocomoRatingService.getCocomoRatingsNames().then((res) => {
+        resolve({data: res});
+      })
+    }).catch((err: any) => {
+      throw new HttpException('Error retrieving COCOMO ratings', HttpStatus.BAD_REQUEST);
+    });
   }
 
   /**
    * Get rating names and categories as list
    */
   @Get('ratings/categories/:categoryName')
-  getRatingsByCategory(@Param('categoryName') categoryName: string): any {
-    const res = this._cocomoRatingService.getCocomoRatingsNamesByCategory(categoryName);
-    if (res) {
-      return res;
-    } else {
-      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
-    }
+  getRatingsByCategory(@Param('categoryName') categoryName: string): Promise<any> {
+    return new Promise<any>((resolve, err) => {
+      this._cocomoRatingService.getCocomoRatingsNamesByCategory(categoryName).then((res) => {
+        resolve({data: res});
+      });
+    }).catch((err: any) => {
+      throw new HttpException('Error retrieving COCOMO ratings by category', HttpStatus.BAD_REQUEST);
+    });
   }
 
   /**
    * Get model names as list
    */
   @Get('models')
-  getModels(): any {
-    const res = this._cocomoModelService.findAll();
-    if (res) {
-      return res;
-    } else {
-      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
-    }
+  getModels(): Promise<any> {
+    return new Promise<any>((resolve, err) => {
+      this._cocomoModelService.findAll().then((res) => {
+        resolve({data: res});
+      });
+    }).catch((err: any) => {
+      throw new HttpException('Error retrieving COCOMO models', HttpStatus.BAD_REQUEST);
+    });
   }
 
   /**
@@ -73,13 +76,14 @@ export class CocomoController {
    * @param ratingName
    */
   @Get('ratings/:ratingName')
-  getRating(@Param('ratingName') ratingName: string): any {
-    const res = this._cocomoRatingService.getCocomoRatingsByName(ratingName);
-    if (res) {
-      return res;
-    } else {
-      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
-    }
+  getRating(@Param('ratingName') ratingName: string): Promise<any> {
+    return new Promise<any>((resolve, err) => {
+      this._cocomoRatingService.getCocomoRatingsByName(ratingName).then((res) => {
+        resolve({data: res});
+      })
+    }).catch((err: any) => {
+      throw new HttpException('Error retrieving COCOMO rating', HttpStatus.BAD_REQUEST);
+    });
   }
 
   /**
@@ -88,16 +92,14 @@ export class CocomoController {
    * @param rating
    */
   @Get('ratings/:ratingName/:rating')
-  getRatingScore(
-    @Param('ratingName') ratingName: string,
-    @Param('rating') rating: string,
-  ): any {
-    const res = this._cocomoRatingService.getCocomoScoreByNameAndRating(ratingName, rating);
-    if (res) {
-      return res;
-    } else {
-      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
-    }
+  getRatingScore(@Param('ratingName') ratingName: string, @Param('rating') rating: string ): Promise<any> {
+    return new Promise<any>((resolve, err) => {
+      this._cocomoRatingService.getCocomoScoreByNameAndRating(ratingName, rating).then((res) => {
+        resolve({data: res});
+      });
+    }).catch((err: any) => {
+      throw new HttpException('Error retrieving COCOMO rating score', HttpStatus.BAD_REQUEST);
+    });
   }
 
   /**
@@ -105,13 +107,14 @@ export class CocomoController {
    * @param modelName
    */
   @Get('models/:modelName')
-  getModel(@Param('modelName') modelName: string): any {
-    const res = this._cocomoModelService.getCocomoModelByName(modelName);
-    if (res) {
-      return res;
-    } else {
-      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
-    }
+  getModel(@Param('modelName') modelName: string): Promise<any> {
+    return new Promise<any>((resolve, err) => {
+      this._cocomoModelService.getCocomoModelByName(modelName).then((res) => {
+        resolve({data: res});
+      });
+    }).catch((err: any) => {
+      throw new HttpException('Error retrieving COCOMO model', HttpStatus.BAD_REQUEST);
+    });
   }
 
   /**
@@ -120,19 +123,14 @@ export class CocomoController {
    * @param modelVariable
    */
   @Get('models/:modelName/:modelVariable')
-  getModelVariable(
-    @Param('modelName') modelName: string,
-    @Param('modelVariable') modelVariable: string,
-  ): any {
-    const res = this._cocomoModelService.getCocomoModelByNameAndVariable(
-      modelName,
-      modelVariable,
-    );
-    if (res) {
-      return res;
-    } else {
-      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
-    }
+  getModelVariable(@Param('modelName') modelName: string, @Param('modelVariable') modelVariable: string): Promise<any> {
+    return new Promise<any>((resolve, err) => {
+      this._cocomoModelService.getCocomoModelByNameAndVariable(modelName,modelVariable).then((res) => {
+        resolve({data: res});
+      });
+    }).catch((err: any) => {
+      throw new HttpException('Error retrieving COCOMO model variable', HttpStatus.BAD_REQUEST);
+    });
   }
 
   /**
@@ -155,7 +153,7 @@ export class CocomoController {
           cocomo = Cocomo.fromRequest(cocomoRequest, cocomoModels, cocomoRatings);
         }).then(() => {
           let cocomoRes: CocomoResponse = cocomo.calculate();
-          resolve(cocomoRes);
+          resolve({message: 'Cocomo has been successfully calculated', data: cocomoRes});
         });
       });
     }).catch((err: any) => {
@@ -174,7 +172,7 @@ export class CocomoController {
       let user: IAuthUser = req['user'];
       if(!user) throw new HttpException('Error Saving COCOMO, not logged in', HttpStatus.FORBIDDEN);
       this._usersService.saveCocomo(user.uid, cocomoRequest).then((res: boolean) => {
-        resolve(res);
+        resolve({message: 'Cocomo has been successfully saved', data: res});
       });
     }).catch((err: any) => {
       throw new HttpException('Error Saving COCOMO', HttpStatus.BAD_REQUEST);
@@ -190,7 +188,7 @@ export class CocomoController {
       let user: IAuthUser = req['user'];
       if(!user) throw new HttpException('Error Getting Saved COCOMOs, not logged in', HttpStatus.FORBIDDEN);
       this._usersService.getSavedCocomos(user.uid).then((res: any[]) => {
-        resolve(res);
+        resolve({data: res});
       });
     }).catch((err: any) => {
       this.logger.error(err);
@@ -214,7 +212,7 @@ export class CocomoController {
             names.push({id: cocomo.id, name: cocomo.name, date: Date.parse(cocomo.date)});
           });
         }
-        resolve(names);
+        resolve({data: names});
       });
     }).catch((err: any) => {
       this.logger.error(err);
@@ -232,7 +230,7 @@ export class CocomoController {
       let user: IAuthUser = req['user'];
       if(!user) throw new HttpException('Error Getting Saved COCOMOs, not logged in', HttpStatus.FORBIDDEN);
       this._usersService.hasSavedCocomos(user.uid).then((res: boolean) => {
-        resolve(res);
+        resolve({data: res});
       });
     }).catch((err: any) => {
       this.logger.error(err);
@@ -246,13 +244,13 @@ export class CocomoController {
    * @param id
    */
   @Get('mine/:id')
-  getSavedCOCOMO(@Req() req: Request, @Param('id') id: string): Promise<CocomoRequest> {
-    return new Promise<CocomoRequest>((resolve) => {
+  getSavedCOCOMO(@Req() req: Request, @Param('id') id: string): Promise<any> {
+    return new Promise<any>((resolve) => {
       let user: IAuthUser = req['user'];
       if(!user) throw new HttpException('Error Getting Saved COCOMO, not logged in', HttpStatus.FORBIDDEN);
       this._usersService.getSavedCocomo(user.uid, id).then((res: CocomoRequest) => {
         if(!res) throw new HttpException('Cocomo not found', HttpStatus.NOT_FOUND);
-        resolve(res);
+        resolve({data:res});
       });
     }).catch((err: any) => {
       this.logger.error(err);
