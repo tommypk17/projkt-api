@@ -40,6 +40,7 @@ export class AppModule implements NestModule{
         {path: '/cocomo/mine', method: RequestMethod.GET},
         {path: '/cocomo/mine/*', method: RequestMethod.GET},
         {path: '/critical-paths/mine', method: RequestMethod.GET},
+        {path: '/critical-paths/mine', method: RequestMethod.POST},
         {path: '/critical-paths/save', method: RequestMethod.POST},
         {path: '/critical-paths/mine/*', method: RequestMethod.GET},
         {path: '/critical-paths/mine/*', method: RequestMethod.POST},

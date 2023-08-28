@@ -245,6 +245,11 @@ export class CriticalPathEdge {
     to: string;
 }
 
+export class CriticalPathRequest {
+    @IsString()
+    name: string;
+}
+
 export class CriticalPathNodeRequest {
     @IsString()
     name: string;

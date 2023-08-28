@@ -20,7 +20,7 @@ import {
     CriticalPathEdge,
     CriticalPathEdgeRequest,
     CriticalPathNode,
-    CriticalPathNodeRequest
+    CriticalPathNodeRequest, CriticalPathRequest
 } from "../../models/CPM";
 import {CriticalPathsService} from "../../services/CriticalPaths.service";
 
@@ -254,6 +254,19 @@ export class CriticalPathsController {
         });
     }
 
+    @Post('mine')
+    newCriticalPath(@Body() criticalPathRequest: CriticalPathRequest, @Req() req: Request): any {
+        return new Promise<any>((resolve) => {
+            let user: IAuthUser = req['user'];
+            if(!user) throw new HttpException('Error Saving Critical Path, not logged in', HttpStatus.FORBIDDEN);
+            this._criticalPathsService.newCriticalPath(user.uid, criticalPathRequest).then((res: boolean) => {
+                resolve({message: 'Critical Path Created', data:res});
+            });
+        }).catch((err: any) => {
+            this.logger.error(err);
+            throw new HttpException('Error Getting Saved Critical Paths', HttpStatus.BAD_REQUEST);
+        });
+    }
 
     @Post('mine/:id/nodes')
     addCriticalPathNode(@Param('id') id: string, @Body() node: CriticalPathNodeRequest, @Req() req: Request): Promise<any> {

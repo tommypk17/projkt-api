@@ -7,7 +7,7 @@ import { CollectionReference, Timestamp } from '@google-cloud/firestore';
 import {Cocomo, CocomoRequest} from "../models/COCOMO";
 import {UserDocument} from "../firestore/models/User.document";
 import {v4 as uuidv4} from 'uuid';
-import {CriticalPath, CriticalPathEdge, CriticalPathNode} from "../models/CPM";
+import {CriticalPath, CriticalPathEdge, CriticalPathNode, CriticalPathRequest} from "../models/CPM";
 import {Serializer} from "../firestore/utilities/Serializer";
 import {CriticalPathDocument} from "../firestore/models/CriticalPath.document";
 
@@ -62,6 +62,28 @@ export class CriticalPathsService {
         return await this.userCollection.doc(userId).collection(CriticalPathDocument.collectionName).add(criticalPath).then(() => {
             this.logger.debug('return: UsersService.saveCriticalPath() saved')
             return true;
+        }).catch((err) => {
+            this.logger.error(err);
+            return false;
+        });
+    }
+
+    async newCriticalPath(userId: string, criticalPath: CriticalPathRequest): Promise<any> {
+        this.logger.debug('initiate: UsersService.newCriticalPath()')
+        this.logger.debug('UsersService.newCriticalPath() adding new saved criticalPath')
+        let cp = new CriticalPath();
+        let cpd: CriticalPathDocument = {
+            name: criticalPath.name,
+            date: new Date(),
+            edges: Serializer.ForFirestore(cp.edges),
+            nodes: Serializer.ForFirestore(cp.nodes)
+        };
+
+        this.logger.debug('UsersService.newCriticalPath() saving criticalPath')
+        // @ts-ignore
+        return await this.userCollection.doc(userId).collection(CriticalPathDocument.collectionName).add(cpd).then((doc) => {
+            this.logger.debug('return: UsersService.newCriticalPath() saved')
+            return doc.id;
         }).catch((err) => {
             this.logger.error(err);
             return false;
