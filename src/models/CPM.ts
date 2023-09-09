@@ -252,13 +252,16 @@ export class CriticalPathRequest {
 
 export class CriticalPathNodeRequest {
     @IsString()
+    id?: string;
+
+    @IsString()
     name: string;
 
     @IsNumber()
     duration: number;
 
     @IsArray()
-    previous: string[];
+    previous: string[] = [];
 }
 
 export class CriticalPathEdgeRequest {

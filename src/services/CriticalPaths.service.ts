@@ -120,6 +120,40 @@ export class CriticalPathsService {
         });
     }
 
+    async updateCriticalPathNode(userId: string, node: any, graphId: string): Promise<boolean> {
+        this.logger.debug('initiate: UsersService.updateCriticalPathNode()')
+        this.logger.debug('UsersService.updateCriticalPathNode() get currently saved criticalPath')
+        const snapshot = await this.userCollection.doc(userId).collection(CriticalPathDocument.collectionName).doc(graphId).get();
+        this.logger.debug('UsersService.updateCriticalPathNode() adding new saved criticalPath')
+
+        if(!snapshot || !snapshot.data()) {
+            this.logger.debug(`UsersService.updateCriticalPathNode() no graph of ID ${graphId} found`)
+            return await new Promise(() => {return false});
+        }
+        let found = snapshot.data();
+        let currentPath = CriticalPath.FromPOJO(found.nodes, found.edges);
+        let nodeToUpdate = currentPath.nodes.find(x => x.id == node.id);
+        if(!nodeToUpdate) {
+            this.logger.debug(`UsersService.updateCriticalPathNode() could not find existing node`)
+            return await new Promise(() => {return false});
+        }
+        nodeToUpdate.name = node.name;
+        nodeToUpdate.duration = node.duration;
+
+        found.nodes = Serializer.ForFirestore(currentPath.nodes)
+        found.edges = Serializer.ForFirestore(currentPath.edges)
+
+        this.logger.debug('UsersService.updateCriticalPathNode() saving criticalPath')
+        // @ts-ignore
+        return await this.userCollection.doc(userId).collection(CriticalPathDocument.collectionName).doc(graphId).update({nodes: found.nodes, edges: found.edges}).then(() => {
+            this.logger.debug('return: UsersService.updateCriticalPathNode() saved')
+            return true;
+        }).catch((err) => {
+            this.logger.error(err);
+            return false;
+        });
+    }
+
     async removeCriticalPathNode(userId: string, nodeId: string, graphId: string): Promise<boolean> {
         this.logger.debug('initiate: UsersService.removeCriticalPathNode()')
         this.logger.debug('UsersService.removeCriticalPathNode() get currently saved criticalPaths')
