@@ -252,9 +252,6 @@ export class CriticalPathRequest {
 
 export class CriticalPathNodeRequest {
     @IsString()
-    id?: string;
-
-    @IsString()
     name: string;
 
     @IsNumber()

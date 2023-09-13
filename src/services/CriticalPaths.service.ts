@@ -120,7 +120,7 @@ export class CriticalPathsService {
         });
     }
 
-    async updateCriticalPathNode(userId: string, node: any, graphId: string): Promise<boolean> {
+    async updateCriticalPathNode(userId: string, node: any, graphId: string, nodeId: string): Promise<boolean> {
         this.logger.debug('initiate: UsersService.updateCriticalPathNode()')
         this.logger.debug('UsersService.updateCriticalPathNode() get currently saved criticalPath')
         const snapshot = await this.userCollection.doc(userId).collection(CriticalPathDocument.collectionName).doc(graphId).get();
@@ -132,7 +132,7 @@ export class CriticalPathsService {
         }
         let found = snapshot.data();
         let currentPath = CriticalPath.FromPOJO(found.nodes, found.edges);
-        let nodeToUpdate = currentPath.nodes.find(x => x.id == node.id);
+        let nodeToUpdate = currentPath.nodes.find(x => x.id == nodeId);
         if(!nodeToUpdate) {
             this.logger.debug(`UsersService.updateCriticalPathNode() could not find existing node`)
             return await new Promise(() => {return false});

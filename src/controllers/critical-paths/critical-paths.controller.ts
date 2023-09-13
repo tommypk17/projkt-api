@@ -282,12 +282,12 @@ export class CriticalPathsController {
         });
     }
 
-    @Put('mine/:id/nodes')
-    updateCriticalPathNode(@Param('id') id: string, @Body() node: CriticalPathNodeRequest, @Req() req: Request): Promise<any> {
+    @Put('mine/:id/nodes/:nodeId')
+    updateCriticalPathNode(@Param('id') id: string, @Param('nodeId') nodeId: string, @Body() node: CriticalPathNodeRequest, @Req() req: Request): Promise<any> {
         return new Promise<any>((resolve) => {
             let user: IAuthUser = req['user'];
             if(!user) throw new HttpException('Error Saving Critical Path, not logged in', HttpStatus.FORBIDDEN);
-            this._criticalPathsService.updateCriticalPathNode(user.uid, node, id).then((res: boolean) => {
+            this._criticalPathsService.updateCriticalPathNode(user.uid, node, id, nodeId).then((res: boolean) => {
                 resolve({message: 'Node successfully updated', data:res});
             });
         }).catch((err: any) => {
