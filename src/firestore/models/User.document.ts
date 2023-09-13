@@ -1,4 +1,5 @@
 import {IsNumber, IsString} from "class-validator";
+import {CriticalPath} from "../../models/CPM";
 
 export class UserDocument {
     static collectionName = 'users';
@@ -26,5 +27,14 @@ export class UserDocument {
             useOfSoftwareTools: string;
             requiredDevelopmentSchedule: string;
         }
-    }]
+    }];
+
+    'savedCriticalPaths': [
+        {
+            id: string;
+            name: string;
+            date: Date;
+            path: CriticalPath;
+        }
+    ]
 }

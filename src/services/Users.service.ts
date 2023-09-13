@@ -2,14 +2,13 @@ import {
     Injectable,
     Inject,
     Logger,
-    InternalServerErrorException,
 } from '@nestjs/common';
 import { CollectionReference, Timestamp } from '@google-cloud/firestore';
-import {CocomoModelDocument} from "../firestore/models/CocomoModel.document";
-import {FileService} from "./FileService";
 import {Cocomo, CocomoRequest} from "../models/COCOMO";
 import {UserDocument} from "../firestore/models/User.document";
 import {v4 as uuidv4} from 'uuid';
+import {CriticalPath, CriticalPathNode } from "../models/CPM";
+import {Serializer} from "../firestore/utilities/Serializer";
 
 
 @Injectable()
@@ -80,7 +79,7 @@ export class UsersService {
         this.logger.debug(`initiate: UsersService.hasSavedCocomos(${userId})`)
         this.logger.debug(`UsersService.hasSavedCocomos(${userId}) get currently saved cocomos`)
         const snapshot = await this.userCollection.doc(userId).get();
-        if(snapshot && snapshot.data() && snapshot.data().savedCOCOMOs.length > 0){
+        if(snapshot && snapshot.data() && snapshot.data().savedCOCOMOs && snapshot.data().savedCOCOMOs.length > 0){
             this.logger.debug(`return: UsersService.hasSavedCocomos(${userId}) at least 1 saved cocomo`)
             return true;
         }
@@ -88,4 +87,130 @@ export class UsersService {
         return false;
     }
 
+    async getSavedCriticalPaths(userId: string): Promise<any[]> {
+        this.logger.debug(`initiate: UsersService.getSavedCriticalPaths(${userId})`)
+        let currentSavedCriticalPaths: any[] = [];
+        this.logger.debug(`UsersService.getSavedCriticalPaths(${userId}) get currently saved critical paths`)
+        const snapshot = await this.userCollection.doc(userId).get();
+        if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
+            currentSavedCriticalPaths = snapshot.data().savedCriticalPaths;
+        }
+        this.logger.debug(`UsersService.getSavedCriticalPaths(${userId}) number of critical paths: ${currentSavedCriticalPaths.length}`)
+        this.logger.debug(`return: UsersService.getSavedCriticalPaths(${userId})`)
+        return currentSavedCriticalPaths;
+    }
+
+    async getSavedCriticalPath(userId: string, id: string): Promise<any> {
+        this.logger.debug(`initiate: UsersService.getSavedCriticalPath(${userId}, ${id})`)
+        let savedCriticalPaths: any[] = [];
+        this.logger.debug(`UsersService.getSavedCriticalPath(${userId}, ${id}) get currently saved critical paths`)
+        const snapshot = await this.userCollection.doc(userId).get();
+        if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
+            savedCriticalPaths = snapshot.data().savedCriticalPaths;
+            let found = savedCriticalPaths.find(x => x.id == id);
+            if(found) {
+                this.logger.debug(`return: UsersService.getSavedCriticalPath(${userId}, ${id}): Critical Path Found`)
+                return CriticalPath.FromPOJO(found.nodes, found.edges);
+            }
+        }
+        this.logger.debug(`return: UsersService.getSavedCriticalPath(${userId}, ${id}): Critical Path Not Found`)
+        return null;
+    }
+
+    async saveCriticalPath(userId: string, criticalPath: any): Promise<boolean> {
+        this.logger.debug('initiate: UsersService.saveCriticalPath()')
+        let savedCriticalPaths: any[] = [];
+        this.logger.debug('UsersService.saveCriticalPath() get currently saved criticalPaths')
+        const snapshot = await this.userCollection.doc(userId).get();
+        if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
+            savedCriticalPaths = snapshot.data().savedCriticalPaths;
+        }
+        this.logger.debug('UsersService.saveCriticalPath() adding new saved criticalPath')
+        criticalPath.id = uuidv4();
+        criticalPath.name = 'CriticalPathName';
+        criticalPath.date = Date();
+        let fk = CriticalPath.FakeCriticalPath();
+        criticalPath.nodes = Serializer.ForFirestore(fk.nodes);
+        criticalPath.edges = Serializer.ForFirestore(fk.edges);
+        savedCriticalPaths.push(criticalPath);
+        this.logger.debug('UsersService.saveCriticalPath() saving criticalPaths')
+        // @ts-ignore
+        return await this.userCollection.doc(userId).set({savedCriticalPaths: savedCriticalPaths}).then(() => {
+            this.logger.debug('return: UsersService.saveCriticalPath() saved')
+            return true;
+        }).catch((err) => {
+            this.logger.error(err);
+            return false;
+        });
+    }
+
+    async addCriticalPathNode(userId: string, node: any, graphId: string): Promise<boolean> {
+        this.logger.debug('initiate: UsersService.saveCriticalPath()')
+        let savedCriticalPaths: any[] = [];
+        this.logger.debug('UsersService.saveCriticalPath() get currently saved criticalPaths')
+        const snapshot = await this.userCollection.doc(userId).get();
+        if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
+            savedCriticalPaths = snapshot.data().savedCriticalPaths;
+        }
+        this.logger.debug('UsersService.saveCriticalPath() adding new saved criticalPath')
+
+        let currentPath = savedCriticalPaths.find(x => x.id == graphId);
+        if(currentPath == -1) {
+            this.logger.debug(`UsersService.saveCriticalPath() no graph of ID ${graphId} found`)
+            return await new Promise(() => {return false});
+        }
+
+        let foundCriticalPath = currentPath;
+
+        let pathToUpdate = CriticalPath.FromString(foundCriticalPath.path);
+        let previousNodes = pathToUpdate.nodes.filter(x => node.previous.some(y => y == x.id));
+        let newNode = new CriticalPathNode(node.name, node.duration);
+        pathToUpdate.add(newNode, previousNodes);
+
+        currentPath.path = JSON.stringify(pathToUpdate);
+
+        this.logger.debug('UsersService.saveCriticalPath() saving criticalPaths')
+        // @ts-ignore
+        return await this.userCollection.doc(userId).set({savedCriticalPaths: savedCriticalPaths}).then(() => {
+            this.logger.debug('return: UsersService.saveCriticalPath() saved')
+            return true;
+        }).catch((err) => {
+            this.logger.error(err);
+            return false;
+        });
+    }
+
+    async removeCriticalPathNode(userId: string, nodeId: string, graphId: string): Promise<boolean> {
+        this.logger.debug('initiate: UsersService.removeCriticalPathNode()')
+        let savedCriticalPaths: any[] = [];
+        this.logger.debug('UsersService.removeCriticalPathNode() get currently saved criticalPaths')
+        const snapshot = await this.userCollection.doc(userId).get();
+        if(snapshot && snapshot.data() && snapshot.data().savedCriticalPaths){
+            savedCriticalPaths = snapshot.data().savedCriticalPaths;
+        }
+        this.logger.debug('UsersService.removeCriticalPathNode() removing node')
+
+        let currentPath = savedCriticalPaths.find(x => x.id == graphId);
+        if(currentPath == -1) {
+            this.logger.debug(`UsersService.removeCriticalPathNode() no graph of ID ${graphId} found`)
+            return await new Promise(() => {return false});
+        }
+
+        let foundCriticalPath = CriticalPath.FromPOJO(currentPath.nodes, currentPath.edges);
+
+        foundCriticalPath.remove(nodeId);
+
+        currentPath.nodes = Serializer.ForFirestore(foundCriticalPath.nodes);
+        currentPath.edges = Serializer.ForFirestore(foundCriticalPath.edges);
+
+        this.logger.debug('UsersService.removeCriticalPathNode() saving criticalPaths')
+        // @ts-ignore
+        return await this.userCollection.doc(userId).set({savedCriticalPaths: savedCriticalPaths}).then(() => {
+            this.logger.debug('return: UsersService.removeCriticalPathNode() saved')
+            return true;
+        }).catch((err) => {
+            this.logger.error(err);
+            return false;
+        });
+    }
 }
